@@ -1,0 +1,2 @@
+# CollectionCraft
+CollectionView wrapping library

@@ -1,8 +1,5 @@
-# sources:
-#   - <sources path>
-#   - <sources path>
 project:
-  file: ../ProjectName.xcodeproj
+  file: ../../../ProjectName.xcodeproj
   target:
     name: TargetName
     module: ModuleName
@@ -10,4 +7,4 @@ templates:
   include:
     - Templates/AutoReusableCell.swifttemplate
 output:
-    ../Generated
+    ../../../Generated

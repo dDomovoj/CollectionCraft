@@ -2,6 +2,7 @@ Pod::Spec.new do |s|
   s.name = 'CollectionCraft'
   s.version = '1.0.0'
   s.summary = 'CollectionView wrapping library'
+  s.swift_version = '5.3'
 
   s.homepage = 'https://github.com/dDomovoj/CollectionCraft'
   s.license = { :type => "MIT" }

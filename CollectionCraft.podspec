@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CollectionCraft'
-  s.version = '1.0.1'
+  s.version = '1.0.2'
   s.summary = 'CollectionView wrapping library'
   s.swift_version = '5.3'
 
@@ -15,6 +15,6 @@ Pod::Spec.new do |s|
   s.dependency 'Sourcery', '~> 0.18.0'
 
   s.ios.deployment_target = '11.0'
-  s.source_files = 'Sources/*.swift'
+  s.source_files = 'Sources/*.swift', '.sourcery/.sourcery.yml', '.sourcery/Templates/*.swifttemplate'
 
 end

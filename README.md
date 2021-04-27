@@ -19,7 +19,9 @@ Also make sure to update `ProjectName`, `Target` and `Module` in `Pods/Collectio
 Then marking `class SomeCell: CollectionViewCell, IReusableCell` with 
 ```
 // sourcery: auto = "cell"
-// sourcery: auto = "footer"
 // sourcery: auto = "header"
+// sourcery: auto = "footer"
 ```
-will generate code in `$PODS_ROOT/../Generated/AutoReusableCell.generated.swift`
+will generate convenient initializers and builder accessors for 
+`CollectionCell<SomeCell>`, `CollectionHeader<SomeCell>`, `CollectionFooter<SomeCell>` 
+accordingly in `$PODS_ROOT/../Generated/AutoReusableCell.generated.swift`

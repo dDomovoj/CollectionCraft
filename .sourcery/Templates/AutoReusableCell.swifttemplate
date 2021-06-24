@@ -1,25 +1,40 @@
 <%
-func cellsTypes(for type: Type) -> [String] {
-    guard let auto = type.annotations["auto"] else { return [] }
 
-    if let single = auto as? String { return [single] }
-    if let array = auto as? [String] { return array }
-    return []
+extension Equatable {
+  func isAny(of candidates: Self...) -> Bool {
+    candidates.contains(self)
+  }
+}
+
+extension String {
+  var isPublic: Bool { isAny(of: "open", "public", "internal") }
+}
+
+extension Variable {
+  var isPublicWriteableMutable: Bool { isMutable && writeAccess.isPublic }
+}
+
+func cellsTypes(for type: Type) -> [String] {
+  guard let auto = type.annotations["auto"] else { return [] }
+
+  if let single = auto as? String { return [single] }
+  if let array = auto as? [String] { return array }
+  return []
 }
 
 func extendableType(for cellType: String) -> String {
-    switch cellType {
-        case "cell": return "CollectionCell"
-        case "header": return "CollectionHeader"
-        case "footer": return "CollectionFooter"
-        default: return ""
-    }
+  switch cellType {
+  case "cell": return "CollectionCell"
+  case "header": return "CollectionHeader"
+  case "footer": return "CollectionFooter"
+  default: return ""
+  }
 }
 
 func stringifyParams(of method: SourceryMethod) -> String {
-    let params = method.parameters
-    let pairs = params.map { "\($0.name): \($0.name)" }
-    return pairs.joined(separator: ", ")
+  let params = method.parameters
+  let pairs = params.map { "\($0.name): \($0.name)" }
+  return pairs.joined(separator: ", ")
 }
 
 func stringTypeName(from typeName: TypeName) -> String {
@@ -30,71 +45,66 @@ func stringTypeName(from typeName: TypeName) -> String {
 }
 
 func stringType(of variable: Variable) -> String {
-    guard let type = variable.type, type.name != nil else { 
-        if variable.typeName.isClosure, let closure = variable.typeName.closure {
-            return stringClosure(closure, typeName: variable.typeName)
-        }
-        return stringTypeName(from: variable.typeName)
+  guard let type = variable.type, type.name != nil else {
+    if variable.typeName.isClosure, let closure = variable.typeName.closure {
+      return stringClosure(closure, typeName: variable.typeName)
     }
-    if variable.typeName.isGeneric { return stringTypeName(from: variable.typeName) }
+    return stringTypeName(from: variable.typeName)
+  }
+  if variable.typeName.isGeneric { return stringTypeName(from: variable.typeName) }
 
-    let suffix = variable.typeName.isOptional ? "?" : ""
-    return type.name + suffix
+  let suffix = variable.typeName.isOptional ? "?" : ""
+  return type.name + suffix
 }
 
 func stringClosure(_ closure: ClosureType, typeName: TypeName) -> String {
-    let pairs = closure.parameters.map { param -> String in
-        var result = ""
-        if param.name.count > 0 {
-            result = "_ \(param.name): "
-        }
-        result = result + stringTypeName(from: param.typeName)
-        return result
+  let pairs = closure.parameters.map { param -> String in
+    var result = ""
+    if let name = param.name, name.count > 0 {
+      result = "_ \(name): "
     }
-    let params = pairs.joined(separator: ", ")
-    let returnType = stringTypeName(from: closure.actualReturnTypeName)
-    let suffix = typeName.isOptional ? "?" : ""
-    return "((\(params)) -> \(returnType))\(suffix)"
+    result = result + stringTypeName(from: param.typeName)
+    return result
+  }
+  let params = pairs.joined(separator: ", ")
+  let returnType = stringTypeName(from: closure.actualReturnTypeName)
+  let suffix = typeName.isOptional ? "?" : ""
+  return "((\(params)) -> \(returnType))\(suffix)"
 }
 
 func stringInitParamsFromStoredVariables(of type: Type) -> String {
-    let variables = type.storedVariables
-    let pairs = variables.map { variable -> String in
-        let pair = "\(variable.name): \(stringType(of: variable))" 
-        var post = ""
-        if let defaultValue = variable.defaultValue {
-            post = " = \(defaultValue)"
-        } else if variable.isOptional {
-            post = " = nil"
-        }
-        return pair + post
+  let variables = type.storedVariables
+  let pairs = variables.map { variable -> String in
+    let pair = "\(variable.name): \(stringType(of: variable))"
+    var post = ""
+    if let defaultValue = variable.defaultValue {
+      post = " = \(defaultValue)"
+    } else if variable.isOptional {
+      post = " = nil"
     }
-    return pairs.joined(separator: ", ")
-}
-
-func isPublicWriteableMutable(_ variable: Variable) -> Bool {
-    return variable.isMutable && ["public", "open", "internal"].contains(variable.writeAccess)
+    return pair + post
+  }
+  return pairs.joined(separator: ", ")
 }
 
 func stringInitWithStoredVariable(of type: Type) -> String {
-    let variables = type.storedVariables
-    let pairs = variables.map { "\($0.name): \($0.name)" }
-    let params = pairs.joined(separator: ", ")
-    return "init(\(params))"
+  let variables = type.storedVariables
+  let pairs = variables.map { "\($0.name): \($0.name)" }
+  let params = pairs.joined(separator: ", ")
+  return "init(\(params))"
 }
 
 func unwrappedStringType(of variable: Variable) -> String {
-    let type = stringType(of: variable).replacingOccurrences(of: "?", with: "")
-    let prefix = type.contains("->") ? "@escaping " : ""
-    return prefix + type
+  let type = stringType(of: variable).replacingOccurrences(of: "?", with: "")
+  let prefix = type.contains("->") ? "@escaping " : ""
+  return prefix + type
 }
 
 func varOrLet(for type: Type) -> String {
-    if type.kind == "class" { return "let" }
-    return "var"
+  type.kind == "class" ? "let" : "var"
 }
-
 -%>
+
 import CollectionCraft
 
 <% for type in types.based["IReusableCell"] { -%>
@@ -102,28 +112,31 @@ import CollectionCraft
     <%_ %>// MARK: - <%= type.name %>
     <%_ for cellType in cellsTypes(for: type) { %>
         <%_ %>extension <%= extendableType(for: cellType) %> where T == <%= type.name %> {
-        <%_ for containedType in type.containedTypes where containedType.localName == "Data" { -%> 
-            <%_ if containedType.initializers.count > 0 { -%>
-                <%_ %>  <%= containedType.initializers[0].name -%> {
-                <%_ %>      self.init(.init(<%= stringifyParams(of: containedType.initializers[0]) %>))
-                <%_ %>  }
+        <%_ for containedType in type.containedTypes where containedType.localName == "Data" { -%>
+            <%_ let accessibleInitializers = containedType.initializers.filter { $0.accessLevel.isPublic } -%>
+            <%_ if !accessibleInitializers.isEmpty { -%>
+                <%_ accessibleInitializers.forEach { initializer in %>
+                    <%_ %>  <%= initializer.name -%> {
+                    <%_ %>      self.init(.init(<%= stringifyParams(of: initializer) %>))
+                    <%_ %>  }
+                <%_ } %>            
             <%_ } else { -%>
                 <%_ %>  init(<%= stringInitParamsFromStoredVariables(of: containedType) %>) {
                 <%_ %>      self.init(.<%= stringInitWithStoredVariable(of: containedType) %>)
                 <%_ %>  }
             <%_ } -%>
-            <%_ for variable in containedType.storedVariables where isPublicWriteableMutable(variable) { %>
+            <%_ for variable in containedType.storedVariables where variable.isPublicWriteableMutable { %>
                 <%_ %>  func <%= variable.name %>(_ <%= variable.name %>: <%= unwrappedStringType(of: variable) %>) -> Self {
-                <%_ %>      <%= varOrLet(for: containedType) %> data = self.data
-                <%_ %>      data.<%= variable.name %> = <%= variable.name %>
-                <%_ if cellType == "cell" { -%>
-                <%_ %>      return Self.init(data, selector: selector)
-                <%_ } else { -%>
-                <%_ %>      return Self.init(data)
-                <%_ } -%>
-                <%_ %>  }
+                 <%_ %>      <%= varOrLet(for: containedType) %> data = self.data
+                 <%_ %>      data.<%= variable.name %> = <%= variable.name %>
+                 <%_ if cellType == "cell" { -%>
+                 <%_ %>      return Self.init(data, selector: selector)
+                 <%_ } else { -%>
+                 <%_ %>      return Self.init(data)
+                 <%_ } -%>
+                 <%_ %>  }
             <%_ } -%>
-        <%_ } -%>        
+        <%_ } -%>
         <%_ %>}<% %>
     <%_ } %>
 <% } %>

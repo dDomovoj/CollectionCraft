@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CollectionCraft'
-  s.version = '1.0.5'
+  s.version = '1.1.0'
   s.summary = 'CollectionView wrapping library'
   s.swift_version = '5.4'
 

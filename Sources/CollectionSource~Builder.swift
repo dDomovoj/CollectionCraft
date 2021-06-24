@@ -32,7 +32,7 @@ fileprivate extension ICollectionSourceBuilderContent {
 
 public extension CollectionSource {
 
-    @_functionBuilder
+    @resultBuilder
     enum Builder {
         public typealias Content = ICollectionSourceBuilderContent
         public static func buildBlock() -> Content { [CollectionSection]() }
@@ -99,7 +99,7 @@ fileprivate extension ICollectionSeсtionBuilderContent {
 
 public extension CollectionSection {
 
-    @_functionBuilder
+    @resultBuilder
     enum Builder {
         public typealias Content = ICollectionSeсtionBuilderContent
         public static func buildBlock() -> Content { [ContentCell]() }

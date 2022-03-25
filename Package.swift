@@ -7,7 +7,7 @@ let package = Package(
   name: "CollectionCraft",
   platforms: [SupportedPlatform.iOS(.v11)],
   products: [.library(name: "CollectionCraft", targets: ["CollectionCraft"])],
-  dependencies: [],
+  dependencies: [.package(url: "https://github.com/ra1028/DifferenceKit", .upToNextMajor(from: "1.4"))],
   targets: [.target(name: "CollectionCraft", dependencies: [], path: "Sources/CollectionCraft")],
   swiftLanguageVersions: [.v5]
 )
